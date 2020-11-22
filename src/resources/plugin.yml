@@ -2,6 +2,7 @@
 name: iConomy
 main: com.iCo.iConomy
 version: 7.1
+api-version: 1.13
 
 # Command Data
 commands:

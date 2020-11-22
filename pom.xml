@@ -18,12 +18,12 @@
 
     <repositories>
         <repository>
-            <id>bukkit-repo</id>
-            <url>http://repo.bukkit.org/content/groups/public</url>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/groups/public</url>
         </repository>
         <repository>
-            <id>sk89q-mvn2</id>
-            <url>http://mvn2.sk89q.com/repo</url>
+            <id>enginehub-maven</id>
+            <url>http://maven.enginehub.org/repo/</url>
         </repository>
     </repositories>
 
@@ -43,8 +43,7 @@
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.7.9-R0.2</version>
-            <type>jar</type>
+            <version>LATEST</version>
         </dependency>
 
         <dependency>
