@@ -2,13 +2,11 @@ package com.iCo.IO;
 
 import com.iCo.Constants;
 import com.iCo.iConomy;
-import com.iCo.util.nbt.ByteTag;
-import com.iCo.util.nbt.CompoundTag;
-import com.iCo.util.nbt.ListTag;
-import com.iCo.util.nbt.NBTInputStream;
-import com.iCo.util.nbt.NBTOutputStream;
-import com.iCo.util.nbt.ShortTag;
-import com.iCo.util.nbt.Tag;
+import com.iCo.util.nbt.*;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,8 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
+// This class has been modified! (2020-11-26)
+// All modified lines carry notices containing a short info of what has been changed.
+// In general, the class has been adapted to no longer use item ids since those are deprecated.
 
 /**
  * Controls inventory for monetary use.
@@ -100,10 +99,19 @@ public class InventoryDB {
                 CompoundTag item = (CompoundTag) inventory.getValue().get(i);
                 byte count = ((ByteTag) item.getValue().get("Count")).getValue();
                 byte slot = ((ByteTag) item.getValue().get("Slot")).getValue();
-                short damage = ((ShortTag) item.getValue().get("Damage")).getValue();
-                short id = ((ShortTag) item.getValue().get("id")).getValue();
+                int damage = ((IntTag) item.getValue().get("Damage")).getValue(); // UPDATED - Now uses IntTag instead of ShortTag
+                Material material = Material.valueOf(((StringTag) item.getValue().get("Material")).getValue()); // UPDATED - Now uses Material and StringTag instead of ShortTag
 
-                stacks[slot] = new ItemStack(id, count, damage);
+                // UPDATED - ItemStack is no longer instantiated using deprecated constructor
+                // Instead, the damage is applied later if necessary
+                stacks[slot] = new ItemStack(material, count);
+                if (damage > 0) {
+                    // Should never actually have a null meta
+                    ItemMeta meta = stacks[slot].getItemMeta();
+                    //noinspection ConstantConditions
+                    ((Damageable) meta).setDamage(damage);
+                    stacks[slot].setItemMeta(meta);
+                }
             }
             return stacks;
         } catch (IOException ex) {
@@ -125,14 +133,20 @@ public class InventoryDB {
 
                 ByteTag count = new ByteTag("Count", (byte) stacks[i].getAmount());
                 ByteTag slot = new ByteTag("Slot", (byte) i);
-                ShortTag damage = new ShortTag("Damage", stacks[i].getDurability());
-                ShortTag id = new ShortTag("id", (short) stacks[i].getTypeId());
+                // UPDATED - damage is no longer extracted using deprecated methods
+                int damageVal = 0;
+                ItemMeta meta = stacks[i].getItemMeta();
+                if (meta instanceof Damageable) {
+                    damageVal = ((Damageable) meta).getDamage();
+                }
+                IntTag damage = new IntTag("Damage", damageVal); // UPDATED - Now IntTag instead of ShortTAg
+                StringTag material = new StringTag("Material", stacks[i].getType().toString()); // UPDATED - Field renamed to Material from id and uses StringTag instead of IntTag
 
                 HashMap<String, Tag> tagMap = new HashMap<String, Tag>();
                 tagMap.put("Count", count);
                 tagMap.put("Slot", slot);
                 tagMap.put("Damage", damage);
-                tagMap.put("id", id);
+                tagMap.put("Material", material); // UPDATED - Fieöd renamed to Material from id
 
                 tagList.add(new CompoundTag("", tagMap));
             }
@@ -152,15 +166,16 @@ public class InventoryDB {
     }
 
     private void setBalance(ItemStack[] contents, double balance) {
-        int major = Constants.Nodes.DatabaseMajorItem.getInteger();
-        int minor = Constants.Nodes.DatabaseMinorItem.getInteger();
+        // METHOD UPDATED - uses Material instead of int for 'major' and 'minor' variables
+        Material major = (Material) Constants.Nodes.DatabaseMajorItem.getValue();
+        Material minor = (Material) Constants.Nodes.DatabaseMinorItem.getValue();
 
         // Remove all existing items
         for (int i = 0; i < contents.length; ++i) {
             ItemStack item = contents[i];
 
             if (item != null)
-                if (item.getTypeId() == major || item.getTypeId() == minor)
+                if (item.getType() == major || item.getType() == minor)
                     contents[i] = null;
         }
 
@@ -170,16 +185,16 @@ public class InventoryDB {
                 if (balance >= 1) {
                     int add = (int) balance;
 
-                    if (add > Material.getMaterial(major).getMaxStackSize())
-                        add = Material.getMaterial(major).getMaxStackSize();
+                    if (add > major.getMaxStackSize())
+                        add =major.getMaxStackSize();
 
                     contents[i] = new ItemStack(major, add);
                     balance -= add;
                 } else if (balance >= 0.01) {
                     int add = (int) (roundTwoDecimals(balance) * 100);
 
-                    if (add > Material.getMaterial(minor).getMaxStackSize())
-                        add = Material.getMaterial(minor).getMaxStackSize();
+                    if (add > minor.getMaxStackSize())
+                        add = minor.getMaxStackSize();
 
                     contents[i] = new ItemStack(minor, add);
                     balance -= 0.01 * add;
@@ -197,15 +212,16 @@ public class InventoryDB {
     }
 
     private double getBalance(ItemStack[] contents) {
+        // METHOD UPDATED - uses Material instead of int for 'major' and 'minor' variables
         double balance = 0;
-        int major = Constants.Nodes.DatabaseMajorItem.getInteger();
-        int minor = Constants.Nodes.DatabaseMinorItem.getInteger();
+        Material major = (Material) Constants.Nodes.DatabaseMajorItem.getValue();
+        Material minor = (Material) Constants.Nodes.DatabaseMinorItem.getValue();
 
         for (ItemStack item : contents)
             if (item != null)
-                if (item.getTypeId() == major)
+                if (item.getType() == major)
                     balance += item.getAmount();
-                else if (item.getTypeId() == minor)
+                else if (item.getType() == minor)
                     balance += 0.01 * item.getAmount();
 
         return balance;

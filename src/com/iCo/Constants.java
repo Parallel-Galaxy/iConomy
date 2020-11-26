@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -68,8 +69,9 @@ public class Constants {
         DatabaseUrl("System.Database.URL", "mysql:\\\\localhost:3306\\iCo"),
         DatabaseUsername("System.Database.Username", "root"),
         DatabasePassword("System.Database.Password", ""),
-        DatabaseMajorItem("System.Database.MajorItem", 266),
-        DatabaseMinorItem("System.Database.MinorItem", 265),
+        // UPDATED 2020-11-26 - MajorItem and MinorItem now carry a Material value instead of an int
+        DatabaseMajorItem("System.Database.MajorItem", Material.GOLD_INGOT),
+        DatabaseMinorItem("System.Database.MinorItem", Material.IRON_INGOT),
 
         Convert("System.Database.Conversion.Enabled", false),
         ConvertFrom("System.Database.Conversion.Type", "H2DB"),
